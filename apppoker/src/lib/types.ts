@@ -1,4 +1,4 @@
-export type PaymentMethod = "cash" | "transferencia" | "adeudo" | "cash-back";
+export type PaymentMethod = "efectivo" | "transferencia" | "adeudo" | "cash-back";
 
 export interface Transaction {
   id: string;
@@ -7,4 +7,5 @@ export interface Transaction {
   amount: number;
   date: Date;
   paymentMethod?: PaymentMethod;
+  ticket?: string;
 }

@@ -14,6 +14,7 @@ import { SummaryDialog, type SummaryData } from '@/components/summary-dialog';
 import { Textarea } from './ui/textarea';
 import { Button } from './ui/button';
 import { Label } from './ui/label';
+import { Input } from './ui/input';
 
 export function DashboardClient() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -23,6 +24,7 @@ export function DashboardClient() {
   const [isSummaryDialogOpen, setIsSummaryDialogOpen] = useState(false);
   const [summaryData, setSummaryData] = useState<SummaryData[]>([]);
   const [comment, setComment] = useState('');
+  const [clubName, setClubName] = useState('');
 
   const handleAddTransaction = (transaction: Omit<Transaction, 'id' | 'date'>) => {
     setTransactions((prev) => [
@@ -81,12 +83,16 @@ export function DashboardClient() {
 
     doc.setFontSize(18);
     doc.text("Resumen de la sesión", 14, 22);
+    if (clubName) {
+      doc.setFontSize(14);
+      doc.text(clubName, 14, 29);
+    }
     doc.setFontSize(11);
     doc.setTextColor(100);
-    doc.text(`Fecha: ${currentDate}`, 14, 29);
+    doc.text(`Fecha: ${currentDate}`, 14, clubName ? 36 : 29);
 
     (doc as any).autoTable({
-      startY: 35,
+      startY: clubName ? 42 : 35,
       head: [['Nombre', 'Ingreso Total', 'Salida Total', 'Flujo Neto']],
       body: tableData,
       foot: [['TOTALES', `$${totalIncome.toFixed(2)}`, `$${totalCashOut.toFixed(2)}`, `$${netFlow.toFixed(2)}`]],
@@ -105,27 +111,39 @@ export function DashboardClient() {
     setIsSummaryDialogOpen(false);
   };
 
+  const nextTicketNumber = transactions.length + 1;
+
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur-sm">
-        <div className="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
+        <div className="container flex h-16 items-center justify-between space-x-4">
           <div className="flex gap-2 items-center">
             <Icons.logo className="h-6 w-6 text-primary" />
             <h1 className="text-2xl font-bold tracking-tight">
               Administrador de entradas y salidas
             </h1>
           </div>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="club-name" className="whitespace-nowrap">Nombre del club</Label>
+            <Input 
+              id="club-name" 
+              placeholder="Nombre del club" 
+              value={clubName}
+              onChange={(e) => setClubName(e.target.value)}
+              className="w-48"
+            />
+          </div>
         </div>
       </header>
       <main className="flex-1 p-4 md:p-8 container">
         <div className="grid gap-8 md:grid-cols-3">
           <div className="md:col-span-1 flex flex-col gap-8">
-            <TransactionForm type="income" onAddTransaction={handleAddTransaction} />
-            <TransactionForm type="cash-out" onAddTransaction={handleAddTransaction} />
+            <TransactionForm type="income" onAddTransaction={handleAddTransaction} nextTicketNumber={nextTicketNumber} />
+            <TransactionForm type="cash-out" onAddTransaction={handleAddTransaction} nextTicketNumber={nextTicketNumber} />
           </div>
           <div className="md:col-span-2 flex flex-col gap-8">
-            <ReportTable transactions={transactions} />
+            <ReportTable transactions={transactions} clubName={clubName} />
             <SummaryCard
               summary={summary}
               isLoading={isSummarizing}

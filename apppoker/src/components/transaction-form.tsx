@@ -1,9 +1,11 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
+import { useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -35,24 +37,31 @@ import { useToast } from "@/hooks/use-toast";
 const formSchema = z.object({
   source: z.string().min(2, 'La fuente debe tener al menos 2 caracteres.'),
   amount: z.coerce.number().positive('La cantidad debe ser positiva.'),
-  paymentMethod: z.enum(["cash", "transferencia", "adeudo", "cash-back"]).optional(),
+  ticket: z.string().optional(),
+  paymentMethod: z.enum(["efectivo", "transferencia", "adeudo", "cash-back"]).optional(),
 });
 
 type TransactionFormProps = {
   type: 'income' | 'cash-out';
   onAddTransaction: (transaction: Omit<Transaction, 'id' | 'date'>) => void;
+  nextTicketNumber: number;
 };
 
-export function TransactionForm({ type, onAddTransaction }: TransactionFormProps) {
+export function TransactionForm({ type, onAddTransaction, nextTicketNumber }: TransactionFormProps) {
   const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       source: '',
       amount: undefined,
-      paymentMethod: type === 'income' ? 'cash' : 'cash',
+      ticket: String(nextTicketNumber),
+      paymentMethod: type === 'income' ? 'efectivo' : 'efectivo',
     },
   });
+
+  useEffect(() => {
+    form.setValue('ticket', String(nextTicketNumber));
+  }, [nextTicketNumber, form]);
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     onAddTransaction({ ...values, type, paymentMethod: values.paymentMethod as PaymentMethod | undefined });
@@ -60,7 +69,7 @@ export function TransactionForm({ type, onAddTransaction }: TransactionFormProps
         title: `${type === 'income' ? 'Miembro ingresado' : 'Salida de cash registrada'}!`,
         description: `${values.source}: $${values.amount.toFixed(2)}`,
     })
-    form.reset({ source: '', amount: undefined, paymentMethod: form.getValues('paymentMethod') });
+    form.reset({ source: '', amount: undefined, ticket: String(nextTicketNumber + 1), paymentMethod: form.getValues('paymentMethod') });
   };
 
   const title = type === 'income' ? 'Ingresar miembro' : 'Registro de salidas de cash';
@@ -113,6 +122,19 @@ export function TransactionForm({ type, onAddTransaction }: TransactionFormProps
             />
             <FormField
               control={form.control}
+              name="ticket"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ticket</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Número de ticket" {...field} readOnly />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="paymentMethod"
               render={({ field }) => (
                 <FormItem>
@@ -124,7 +146,7 @@ export function TransactionForm({ type, onAddTransaction }: TransactionFormProps
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="efectivo">Efectivo</SelectItem>
                       <SelectItem value="transferencia">Transferencia</SelectItem>
                       <SelectItem value="adeudo">Adeudo</SelectItem>
                       <SelectItem value="cash-back">Cash Back</SelectItem>
