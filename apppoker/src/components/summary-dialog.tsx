@@ -34,9 +34,10 @@ type SummaryDialogProps = {
   summaryData: SummaryData[];
   onPrintSummary: () => void;
   isPrinting: boolean;
+  rakeAmount?: number;
 };
 
-export function SummaryDialog({ isOpen, onClose, summaryData, onPrintSummary, isPrinting }: SummaryDialogProps) {
+export function SummaryDialog({ isOpen, onClose, summaryData, onPrintSummary, isPrinting, rakeAmount }: SummaryDialogProps) {
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -48,11 +49,12 @@ export function SummaryDialog({ isOpen, onClose, summaryData, onPrintSummary, is
   const totalIncome = summaryData.reduce((acc, item) => acc + item.totalIncome, 0);
   const totalCashOut = summaryData.reduce((acc, item) => acc + item.totalCashOut, 0);
   const netFlow = totalIncome - totalCashOut;
+  const netFlowWithRake = netFlow - (rakeAmount || 0);
 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Resumen por Miembro</DialogTitle>
           <DialogDescription>
@@ -89,11 +91,21 @@ export function SummaryDialog({ isOpen, onClose, summaryData, onPrintSummary, is
             </TableBody>
             <TableFooter>
                 <TableRow>
-                    <TableCell colSpan={1} className="font-bold">TOTALES</TableCell>
-                    <TableCell className="text-right font-bold">{formatCurrency(totalIncome)}</TableCell>
-                    <TableCell className="text-right font-bold">{formatCurrency(totalCashOut)}</TableCell>
+                    <TableCell colSpan={3} className="font-bold">TOTALES</TableCell>
                     <TableCell className={`text-right font-bold ${netFlow < 0 ? 'text-destructive' : ''}`}>{formatCurrency(netFlow)}</TableCell>
                 </TableRow>
+                {rakeAmount !== undefined && rakeAmount > 0 && (
+                  <>
+                    <TableRow>
+                      <TableCell colSpan={3} className="font-bold">Rake</TableCell>
+                      <TableCell className="text-right font-bold text-destructive">{formatCurrency(rakeAmount * -1)}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell colSpan={3} className="font-bold">Neto con Rake</TableCell>
+                      <TableCell className={`text-right font-bold ${netFlowWithRake < 0 ? 'text-destructive' : ''}`}>{formatCurrency(netFlowWithRake)}</TableCell>
+                    </TableRow>
+                  </>
+                )}
             </TableFooter>
           </Table>
         </div>
@@ -107,3 +119,5 @@ export function SummaryDialog({ isOpen, onClose, summaryData, onPrintSummary, is
     </Dialog>
   );
 }
+
+    

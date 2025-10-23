@@ -7,15 +7,10 @@ export const Icons = {
       width="24"
       height="24"
       viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      fill="currentColor"
       {...props}
     >
-      <path d="M12 2v20" />
-      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+      <path d="M12 2.5C12 2.5 6.5 8.5 6.5 12.5C6.5 16.5 9 18.5 12 18.5C15 18.5 17.5 16.5 17.5 12.5C17.5 8.5 12 2.5 12 2.5M12 21.5C16.14 21.5 19.5 17.84 19.5 12.5C19.5 8.57 14.73 3.45 12.53 1.57C12.39 1.45 12.2 1.45 12.06 1.56C9.83 3.4 4.5 8.7 4.5 12.5C4.5 17.84 7.86 21.5 12 21.5Z" />
     </svg>
   ),
 };

@@ -1,4 +1,4 @@
-export type PaymentMethod = "efectivo" | "transferencia" | "adeudo" | "cash-back";
+export type PaymentMethod = "efectivo" | "transferencia" | "adeudo" | "cash-back" | "jackpot";
 
 export interface Transaction {
   id: string;

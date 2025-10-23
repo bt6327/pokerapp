@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -34,21 +34,46 @@ import {
 import type { Transaction, PaymentMethod } from '@/lib/types';
 import { useToast } from "@/hooks/use-toast";
 
-const formSchema = z.object({
-  source: z.string().min(2, 'La fuente debe tener al menos 2 caracteres.'),
-  amount: z.coerce.number().positive('La cantidad debe ser positiva.'),
-  ticket: z.string().optional(),
-  paymentMethod: z.enum(["efectivo", "transferencia", "adeudo", "cash-back"]).optional(),
-});
+const createFormSchema = (type: 'income' | 'cash-out', existingMembers: string[] = []) => {
+  const baseSchema = z.object({
+    source: z.string().min(2, 'La fuente debe tener al menos 2 caracteres.'),
+    amount: z.coerce.number().positive('La cantidad debe ser positiva.'),
+    ticket: z.string().optional(),
+    paymentMethod: z.enum(
+        type === 'income' 
+        ? ["efectivo", "transferencia", "adeudo", "cash-back"]
+        : ["efectivo", "transferencia", "adeudo", "jackpot"]
+      ).optional(),
+  });
+
+  if (type === 'cash-out') {
+    return baseSchema.refine((data) => {
+      if (!existingMembers || existingMembers.length === 0) {
+        return false;
+      }
+      return existingMembers.map(m => m.toUpperCase()).includes(data.source.toUpperCase());
+    }, {
+      message: "miembro no ingresado, no puede realizar retiro",
+      path: ["source"],
+    });
+  }
+  
+  return baseSchema;
+};
+
 
 type TransactionFormProps = {
   type: 'income' | 'cash-out';
   onAddTransaction: (transaction: Omit<Transaction, 'id' | 'date'>) => void;
   nextTicketNumber: number;
+  existingMembers?: string[];
 };
 
-export function TransactionForm({ type, onAddTransaction, nextTicketNumber }: TransactionFormProps) {
+export function TransactionForm({ type, onAddTransaction, nextTicketNumber, existingMembers = [] }: TransactionFormProps) {
   const { toast } = useToast();
+  
+  const formSchema = useMemo(() => createFormSchema(type, existingMembers), [type, existingMembers]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -62,6 +87,13 @@ export function TransactionForm({ type, onAddTransaction, nextTicketNumber }: Tr
   useEffect(() => {
     form.setValue('ticket', String(nextTicketNumber));
   }, [nextTicketNumber, form]);
+  
+  useEffect(() => {
+    // Re-validate the 'source' field when existingMembers changes
+    if (type === 'cash-out' && form.getValues('source')) {
+      form.trigger('source');
+    }
+  }, [existingMembers, form, type]);
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     onAddTransaction({ ...values, type, paymentMethod: values.paymentMethod as PaymentMethod | undefined });
@@ -149,7 +181,8 @@ export function TransactionForm({ type, onAddTransaction, nextTicketNumber }: Tr
                       <SelectItem value="efectivo">Efectivo</SelectItem>
                       <SelectItem value="transferencia">Transferencia</SelectItem>
                       <SelectItem value="adeudo">Adeudo</SelectItem>
-                      <SelectItem value="cash-back">Cash Back</SelectItem>
+                      {type === 'income' && <SelectItem value="cash-back">Cash Back</SelectItem>}
+                      {type === 'cash-out' && <SelectItem value="jackpot">Jackpot</SelectItem>}
                     </SelectContent>
                   </Select>
                   <FormMessage />
