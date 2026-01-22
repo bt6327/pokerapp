@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo } from 'react';
@@ -62,50 +63,51 @@ export function ReportTable({ transactions, clubName }: ReportTableProps) {
     const doc = new jsPDF({
       orientation: 'p',
       unit: 'mm',
-      format: [80, 150] 
+      format: [72.07, 95] 
     });
     
+    const scale = 0.9;
     const leftMargin = 7;
     let currentY = 15;
 
-    doc.setFontSize(14);
+    doc.setFontSize(14 * scale);
     doc.setFont('helvetica', 'bold');
     doc.text(clubName || 'Recibo', doc.internal.pageSize.getWidth() / 2, currentY, { align: 'center' });
-    currentY += 10;
+    currentY += (10 * scale);
     
-    doc.setFontSize(10);
+    doc.setFontSize(10 * scale);
     doc.setFont('helvetica', 'normal');
 
     const transactionType = transaction.type === 'income' ? 'Ingreso' : 'Salida';
     doc.text(transactionType, doc.internal.pageSize.getWidth() / 2, currentY, { align: 'center' });
-    currentY += 8;
+    currentY += (8 * scale);
 
     doc.text(`Ticket: #${transaction.ticket}`, leftMargin, currentY);
-    currentY += 7;
+    currentY += (7 * scale);
     
     doc.text(`Nombre: ${transaction.source}`, leftMargin, currentY);
-    currentY += 7;
+    currentY += (7 * scale);
 
     doc.text(`Método de pago: ${transaction.paymentMethod?.replace('-', ' ') ?? 'N/A'}`, leftMargin, currentY);
-    currentY += 7;
+    currentY += (7 * scale);
 
     doc.text(`Fecha: ${transaction.date.toLocaleDateString()}`, leftMargin, currentY);
-    currentY += 7;
+    currentY += (7 * scale);
 
     doc.text(`Hora: ${transaction.date.toLocaleTimeString()}`, leftMargin, currentY);
-    currentY += 10;
+    currentY += (10 * scale);
     
-    doc.setFontSize(12);
+    doc.setFontSize(12 * scale);
     doc.setFont('helvetica', 'bold');
     doc.text('Cantidad:', leftMargin, currentY);
     doc.text(formatCurrency(transaction.amount), doc.internal.pageSize.getWidth() - leftMargin, currentY, { align: 'right' });
-    currentY += 10;
+    currentY += (10 * scale);
 
     doc.setLineDash([1, 1], 0);
     doc.line(leftMargin, currentY, doc.internal.pageSize.getWidth() - leftMargin, currentY);
 
-    const filename = `Ticket-${transaction.ticket}-${transaction.source}.pdf`;
-    doc.save(filename);
+    doc.autoPrint();
+    doc.output('dataurlnewwindow');
   };
 
   return (
